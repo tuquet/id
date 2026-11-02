@@ -1,0 +1,8 @@
+{
+  "id": "operon",
+  "name": "Operon Automation Engine",
+  "version": "1.0.0",
+  "description": "Unified Antidetect Browser Profiles, Compute Fleet Nodes, Proxies & Automation Scheduler",
+  "schema": "operon",
+  "dependencies": ["identity"]
+}

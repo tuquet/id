@@ -20,6 +20,7 @@ $dbContainer = docker ps --filter "name=supabase_db" --format "{{.Names}}" | Sel
 
 if ($Action -eq "uninstall") {
     $canonicalPlugins = @(
+        @{ Id = "operon"; File = "supabase/plugins/operon/uninstall.sql"; Desc = "Operon Runtime Engine (schema: operon)" },
         @{ Id = "store"; File = "supabase/plugins/store/uninstall.sql"; Desc = "Store Engine (schema: medusa)" },
         @{ Id = "dispatch"; File = "supabase/plugins/dispatch/uninstall.sql"; Desc = "Dispatch & Realtime Outbox (schema: events)" },
         @{ Id = "licensing"; File = "supabase/plugins/licensing/uninstall.sql"; Desc = "Licensing & Quotas (schema: billing)" },
@@ -30,7 +31,8 @@ if ($Action -eq "uninstall") {
         @{ Id = "vault"; File = "supabase/plugins/vault/install.sql"; Desc = "Vault (Zero-Knowledge DEK & Vault)" },
         @{ Id = "licensing"; File = "supabase/plugins/licensing/install.sql"; Desc = "Licensing & Quotas (schema: billing)" },
         @{ Id = "dispatch"; File = "supabase/plugins/dispatch/install.sql"; Desc = "Dispatch & Realtime Outbox (schema: events)" },
-        @{ Id = "store"; File = "supabase/plugins/store/install.sql"; Desc = "Store Engine (schema: medusa)" }
+        @{ Id = "store"; File = "supabase/plugins/store/install.sql"; Desc = "Store Engine (schema: medusa)" },
+        @{ Id = "operon"; File = "supabase/plugins/operon/install.sql"; Desc = "Operon Runtime Engine (schema: operon)" }
     )
 }
 
