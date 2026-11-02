@@ -12,7 +12,7 @@ $cloudDir = Split-Path -Parent (Split-Path -Parent $scriptDir)
 Set-Location $cloudDir
 
 Write-Host "====================================================================" -ForegroundColor Cyan
-Write-Host " [TUQUET-SUPABASE] Core Plugins Runner (Action: $Action, Target: $Target)" -ForegroundColor Cyan
+Write-Host " [ID-PLATFORM] Core Plugins Runner (Action: $Action, Target: $Target)" -ForegroundColor Cyan
 Write-Host " Working Directory: $cloudDir" -ForegroundColor DarkGray
 Write-Host "====================================================================" -ForegroundColor Cyan
 
@@ -20,6 +20,7 @@ $dbContainer = docker ps --filter "name=supabase_db" --format "{{.Names}}" | Sel
 
 if ($Action -eq "uninstall") {
     $canonicalPlugins = @(
+        @{ Id = "commerce-bridge"; File = "supabase/plugins/commerce-bridge/uninstall.sql"; Desc = "Commerce Bridge (schema: medusa)" },
         @{ Id = "webhooks"; File = "supabase/plugins/webhooks/uninstall.sql"; Desc = "Asynchronous Outbox & Webhooks (schema: events)" },
         @{ Id = "subscriptions"; File = "supabase/plugins/subscriptions/uninstall.sql"; Desc = "Subscriptions & Quota (schema: billing)" },
         @{ Id = "secrets"; File = "supabase/plugins/secrets/uninstall.sql"; Desc = "Zero-Knowledge DEK & Vault (schema: secrets)" }
@@ -28,7 +29,8 @@ if ($Action -eq "uninstall") {
     $canonicalPlugins = @(
         @{ Id = "secrets"; File = "supabase/plugins/secrets/install.sql"; Desc = "Zero-Knowledge DEK & Vault (schema: secrets)" },
         @{ Id = "subscriptions"; File = "supabase/plugins/subscriptions/install.sql"; Desc = "Subscriptions & Quota (schema: billing)" },
-        @{ Id = "webhooks"; File = "supabase/plugins/webhooks/install.sql"; Desc = "Asynchronous Outbox & Webhooks (schema: events)" }
+        @{ Id = "webhooks"; File = "supabase/plugins/webhooks/install.sql"; Desc = "Asynchronous Outbox & Webhooks (schema: events)" },
+        @{ Id = "commerce-bridge"; File = "supabase/plugins/commerce-bridge/install.sql"; Desc = "Commerce Bridge (schema: medusa)" }
     )
 }
 

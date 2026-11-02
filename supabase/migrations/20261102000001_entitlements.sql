@@ -1,19 +1,12 @@
 -- ============================================================================
--- SUPABASE MIGRATION: MEDUSA SCHEMA DEDICATED ISOLATION & GRANTS
+-- SUPABASE MIGRATION: GLOBAL USER ENTITLEMENTS & ACCESS PERMITS
 -- Version: 20261102000001
--- Description: Creates isolated 'medusa' schema for Medusa v2 E-Commerce Engine
+-- Target: Supabase / PostgreSQL (Core IAM Extension)
+-- Description: Central entitlements registry for all ecosystem apps (License,
+--              Plans, Tiers, Feature Flags) tied to auth.users.
 -- ============================================================================
 
--- 1. Create dedicated schema
-CREATE SCHEMA IF NOT EXISTS medusa;
-
--- 2. Grants for standard Supabase roles
-GRANT USAGE ON SCHEMA medusa TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA medusa GRANT ALL ON TABLES TO postgres, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA medusa GRANT ALL ON FUNCTIONS TO postgres, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA medusa GRANT ALL ON SEQUENCES TO postgres, service_role;
-
--- 3. Entitlements Hub Table in public schema (Bản quyền xuyên suốt)
+-- 1. Create Entitlements Table in public schema
 CREATE TABLE IF NOT EXISTS public.user_entitlements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -26,7 +19,11 @@ CREATE TABLE IF NOT EXISTS public.user_entitlements (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Enable RLS for entitlements
+-- Index for high-performance license and access lookup
+CREATE INDEX IF NOT EXISTS idx_user_entitlements_lookup 
+ON public.user_entitlements(user_id, app_code);
+
+-- 2. Enable Row-Level Security (RLS)
 ALTER TABLE public.user_entitlements ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
