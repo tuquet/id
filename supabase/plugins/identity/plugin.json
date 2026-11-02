@@ -1,0 +1,8 @@
+{
+  "id": "identity",
+  "name": "Identity & Organizations",
+  "version": "1.0.0",
+  "description": "Foundational multi-tenant identity, profiles, organizations, and RBAC",
+  "schema": "public",
+  "dependencies": []
+}

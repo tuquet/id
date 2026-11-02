@@ -1,0 +1,8 @@
+{
+  "id": "dispatch",
+  "name": "Dispatch & Events",
+  "version": "1.0.0",
+  "description": "Cross-application transactional event outbox, realtime relays, and webhooks",
+  "schema": "events",
+  "dependencies": []
+}

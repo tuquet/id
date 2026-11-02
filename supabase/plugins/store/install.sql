@@ -1,6 +1,6 @@
 -- ============================================================================
--- PLUGIN: COMMERCE BRIDGE (MEDUSA SCHEMA ISOLATION) - INSTALLATION
--- Plugin ID: commerce-bridge
+-- PLUGIN: STORE (MEDUSA COMMERCE SCHEMA ISOLATION) - INSTALLATION
+-- Plugin ID: store
 -- Version: 1.0.0
 -- Architecture: PostgreSQL Dedicated Schema Isolation (schema: medusa)
 -- ============================================================================
@@ -19,8 +19,8 @@ DO $$ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'plugins') THEN
         INSERT INTO public.plugins (id, name, version, status, description)
         VALUES (
-            'commerce-bridge',
-            'Commerce Bridge (Medusa Isolation)',
+            'store',
+            'Store Engine (Medusa Commerce)',
             '1.0.0',
             'installed',
             'Dedicated PostgreSQL schema isolation for Medusa v2'

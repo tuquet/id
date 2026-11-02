@@ -1,0 +1,8 @@
+{
+  "id": "store",
+  "name": "Store Engine (Medusa Commerce)",
+  "version": "1.0.0",
+  "description": "Dedicated PostgreSQL schema isolation for Medusa v2 E-Commerce Store",
+  "schema": "medusa",
+  "dependencies": []
+}

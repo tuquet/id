@@ -12,7 +12,7 @@ $cloudDir = Split-Path -Parent (Split-Path -Parent $scriptDir)
 Set-Location $cloudDir
 
 Write-Host "====================================================================" -ForegroundColor Cyan
-Write-Host " [ID-PLATFORM] Core Plugins Runner (Action: $Action, Target: $Target)" -ForegroundColor Cyan
+Write-Host " [ID-PLATFORM] Product Modules Runner (Action: $Action, Target: $Target)" -ForegroundColor Cyan
 Write-Host " Working Directory: $cloudDir" -ForegroundColor DarkGray
 Write-Host "====================================================================" -ForegroundColor Cyan
 
@@ -20,17 +20,17 @@ $dbContainer = docker ps --filter "name=supabase_db" --format "{{.Names}}" | Sel
 
 if ($Action -eq "uninstall") {
     $canonicalPlugins = @(
-        @{ Id = "commerce-bridge"; File = "supabase/plugins/commerce-bridge/uninstall.sql"; Desc = "Commerce Bridge (schema: medusa)" },
-        @{ Id = "webhooks"; File = "supabase/plugins/webhooks/uninstall.sql"; Desc = "Asynchronous Outbox & Webhooks (schema: events)" },
-        @{ Id = "subscriptions"; File = "supabase/plugins/subscriptions/uninstall.sql"; Desc = "Subscriptions & Quota (schema: billing)" },
-        @{ Id = "secrets"; File = "supabase/plugins/secrets/uninstall.sql"; Desc = "Zero-Knowledge DEK & Vault (schema: secrets)" }
+        @{ Id = "store"; File = "supabase/plugins/store/uninstall.sql"; Desc = "Store Engine (schema: medusa)" },
+        @{ Id = "dispatch"; File = "supabase/plugins/dispatch/uninstall.sql"; Desc = "Dispatch & Realtime Outbox (schema: events)" },
+        @{ Id = "licensing"; File = "supabase/plugins/licensing/uninstall.sql"; Desc = "Licensing & Quotas (schema: billing)" },
+        @{ Id = "vault"; File = "supabase/plugins/vault/uninstall.sql"; Desc = "Vault (Zero-Knowledge DEK & Vault)" }
     )
 } else {
     $canonicalPlugins = @(
-        @{ Id = "secrets"; File = "supabase/plugins/secrets/install.sql"; Desc = "Zero-Knowledge DEK & Vault (schema: secrets)" },
-        @{ Id = "subscriptions"; File = "supabase/plugins/subscriptions/install.sql"; Desc = "Subscriptions & Quota (schema: billing)" },
-        @{ Id = "webhooks"; File = "supabase/plugins/webhooks/install.sql"; Desc = "Asynchronous Outbox & Webhooks (schema: events)" },
-        @{ Id = "commerce-bridge"; File = "supabase/plugins/commerce-bridge/install.sql"; Desc = "Commerce Bridge (schema: medusa)" }
+        @{ Id = "vault"; File = "supabase/plugins/vault/install.sql"; Desc = "Vault (Zero-Knowledge DEK & Vault)" },
+        @{ Id = "licensing"; File = "supabase/plugins/licensing/install.sql"; Desc = "Licensing & Quotas (schema: billing)" },
+        @{ Id = "dispatch"; File = "supabase/plugins/dispatch/install.sql"; Desc = "Dispatch & Realtime Outbox (schema: events)" },
+        @{ Id = "store"; File = "supabase/plugins/store/install.sql"; Desc = "Store Engine (schema: medusa)" }
     )
 }
 
@@ -56,7 +56,7 @@ foreach ($item in $canonicalPlugins) {
         Write-Error "[-] Failed to $Action plugin: $($item.Id)"
         exit 1
     }
-    Write-Host "    [OK] Plugin $($item.Id) applied successfully." -ForegroundColor Green
+    Write-Host "    [OK] Module $($item.Id) applied successfully." -ForegroundColor Green
 
     if ($Action -eq "install" -and $WithSeed) {
         $seedFile = "supabase/plugins/$($item.Id)/seed.sql"
@@ -72,4 +72,4 @@ foreach ($item in $canonicalPlugins) {
     }
 }
 
-Write-Host "`n[SUCCESS] Plugins pipeline completed successfully!" -ForegroundColor Green
+Write-Host "`n[SUCCESS] Product modules pipeline completed successfully!" -ForegroundColor Green

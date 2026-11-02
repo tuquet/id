@@ -1,0 +1,8 @@
+{
+  "id": "vault",
+  "name": "Vault & Secrets",
+  "version": "1.0.0",
+  "description": "Zero-Knowledge DEK encryption and high-security credential vault",
+  "schema": "secrets",
+  "dependencies": []
+}

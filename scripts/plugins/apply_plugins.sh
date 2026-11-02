@@ -1,84 +1,59 @@
 #!/usr/bin/env bash
-# ============================================================================
-# TUQUET-CLOUD PLUGIN RUNNER UTILITY (BASH / LINUX / CI)
-# Description: Automates atomic installation & uninstallation of plugins
-#              in canonical architectural order against local or linked Supabase.
-# ============================================================================
+# ==============================================================================
+# [ID-PLATFORM] Product Modules Pipeline Runner (Bash)
+# ==============================================================================
 
 set -euo pipefail
 
 TARGET="${1:-local}"
-PLUGIN="${2:-all}"
-ACTION="${3:-install}"
-WITH_SEED="${4:-true}"
+ACTION="${2:-install}"
+WITH_SEED="${3:-true}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLOUD_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+cd "$CLOUD_DIR"
 
 echo "===================================================================="
-echo " [TUQUET-CLOUD] Plugin Pipeline Runner (Action: $ACTION, Target: $TARGET)"
+echo " [ID-PLATFORM] Product Modules Runner (Action: $ACTION, Target: $TARGET)"
+echo " Working Directory: $CLOUD_DIR"
 echo "===================================================================="
 
-if [[ "$ACTION" == "uninstall" ]]; then
-    CANONICAL_PLUGINS=(
-        "automation:supabase/plugins/automation/uninstall.sql:Automation Cloud Bridge (schema: automation)"
-        "browsers:supabase/plugins/browsers/uninstall.sql:Cloud Browser Profiles (schema: browsers)"
-        "workers:supabase/plugins/workers/uninstall.sql:Workers & Compute Fleet (schema: workers)"
-        "webhooks:supabase/plugins/webhooks/uninstall.sql:Asynchronous Outbox & Webhooks (schema: events)"
-        "subscriptions:supabase/plugins/subscriptions/uninstall.sql:Subscriptions & Quota (schema: billing)"
-        "storage:supabase/plugins/storage/uninstall.sql:Media Storage Assets (schema: media)"
-    )
+DB_CONTAINER=$(docker ps --filter "name=supabase_db" --format "{{.Names}}" | head -n 1 || true)
+
+apply_file() {
+    local file_path="$1"
+    if [ "$TARGET" = "local" ] && [ -n "$DB_CONTAINER" ]; then
+        docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$file_path"
+    else
+        supabase db query "--$TARGET" -f "$file_path"
+    fi
+}
+
+if [ "$ACTION" = "uninstall" ]; then
+    MODULES=("store" "dispatch" "licensing" "vault")
 else
-    CANONICAL_PLUGINS=(
-        "storage:supabase/plugins/storage/install.sql:Media Storage Assets (schema: media)"
-        "subscriptions:supabase/plugins/subscriptions/install.sql:Subscriptions & Quota (schema: billing)"
-        "webhooks:supabase/plugins/webhooks/install.sql:Asynchronous Outbox & Webhooks (schema: events)"
-        "workers:supabase/plugins/workers/install.sql:Workers & Compute Fleet (schema: workers)"
-        "browsers:supabase/plugins/browsers/install.sql:Cloud Browser Profiles (schema: browsers)"
-        "automation:supabase/plugins/automation/install.sql:Automation Cloud Bridge (schema: automation)"
-        "secrets:supabase/plugins/secrets/install.sql:Zero-Knowledge DEK & Vault (schema: secrets)"
-        "commerce:supabase/plugins/commerce/install.sql:Digital Store & Auto-Fulfillment (schema: commerce)"
-    )
+    MODULES=("vault" "licensing" "dispatch" "store")
 fi
 
-for item in "${CANONICAL_PLUGINS[@]}"; do
-    IFS=":" read -r plugin_id sql_file desc <<< "$item"
-
-    if [[ "$PLUGIN" != "all" && "$PLUGIN" != "$plugin_id" ]]; then
+for mod in "${MODULES[@]}"; do
+    SQL_FILE="supabase/plugins/$mod/$ACTION.sql"
+    if [ ! -f "$SQL_FILE" ]; then
+        echo "[-] Module action file not found, skipping: $SQL_FILE"
         continue
     fi
 
-    if [[ ! -f "$sql_file" ]]; then
-        echo "[-] Error: Plugin $ACTION file not found: $sql_file" >&2
-        exit 1
-    fi
+    echo -e "\n--> [$ACTION] Module: $mod..."
+    apply_file "$SQL_FILE"
+    echo "    [OK] Module $mod applied successfully."
 
-    echo ""
-    echo "--> ${ACTION^}ing Plugin: [$plugin_id] - $desc"
-    if [[ "$TARGET" == "local" ]]; then
-        DB_CONTAINER=$(docker ps --filter "name=supabase_db" --format "{{.Names}}" | head -n 1)
-        if [[ -n "$DB_CONTAINER" ]]; then
-            docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$sql_file"
-        else
-            supabase db query "--$TARGET" -f "$sql_file"
-        fi
-    else
-        supabase db query "--$TARGET" -f "$sql_file"
-    fi
-    echo "    [OK] Successfully applied $sql_file"
-
-    if [[ "$ACTION" == "install" && "$WITH_SEED" == "true" ]]; then
-        seed_file="supabase/plugins/$plugin_id/seed.sql"
-        if [[ -f "$seed_file" ]]; then
-            echo "    --> Applying sample data: $seed_file"
-            if [[ "$TARGET" == "local" && -n "${DB_CONTAINER:-}" ]]; then
-                docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$seed_file"
-            else
-                supabase db query "--$TARGET" -f "$seed_file"
-            fi
-            echo "    [OK] Sample data applied for $plugin_id"
+    if [ "$ACTION" = "install" ] && [ "$WITH_SEED" = "true" ]; then
+        SEED_FILE="supabase/plugins/$mod/seed.sql"
+        if [ -f "$SEED_FILE" ]; then
+            echo "    --> Applying sample data: $SEED_FILE"
+            apply_file "$SEED_FILE"
+            echo "    [OK] Sample data applied for $mod"
         fi
     fi
 done
 
-echo ""
-echo "===================================================================="
-echo " [SUCCESS] All targeted plugins have been processed ($ACTION) successfully."
-echo "===================================================================="
+echo -e "\n[SUCCESS] Product modules pipeline completed successfully!"

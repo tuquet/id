@@ -1,8 +1,0 @@
-{
-  "id": "commerce-bridge",
-  "name": "Commerce Bridge (Medusa Isolation)",
-  "version": "1.0.0",
-  "description": "Dedicated PostgreSQL schema isolation and cross-schema privileges for Medusa v2 E-Commerce engine",
-  "schema": "medusa",
-  "dependencies": []
-}
