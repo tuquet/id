@@ -60,9 +60,14 @@ async function main() {
     message: `Chọn hành động thực hiện trên [${target.toUpperCase()}]:`,
     options: [
       {
+        value: 'full-cycle',
+        label: pc.green('Full Setup: Reset + Plugins + Seed + Audit'),
+        hint: 'Khuyên dùng: Xóa sạch, nạp migrations, cài plugins, nạp seed E2E và kiểm tra',
+      },
+      {
         value: 'reset',
         label: pc.yellow('Reset Database & Sync Migrations'),
-        hint: 'Xóa sạch, nạp migrations: identity, licensing, operon',
+        hint: 'Chỉ xóa sạch và nạp migrations: identity, licensing, operon',
       },
       {
         value: 'plugins',
@@ -80,7 +85,7 @@ async function main() {
         hint: 'Chạy Snippet 01 audit số lượng bảng',
       },
     ],
-    initialValue: 'reset',
+    initialValue: 'full-cycle',
   });
 
   if (isCancel(action)) {
@@ -103,7 +108,7 @@ async function main() {
   const s = spinner();
 
   if (target === 'local') {
-    if (action === 'reset') {
+    const runReset = () => {
       s.start('Đang reset Local Supabase Database qua Docker...');
       const localArgs = ['db', 'reset', '--local'];
       if (noSeed) localArgs.push('--no-seed');
@@ -115,16 +120,20 @@ async function main() {
         outro(pc.red('Dừng thao tác.'));
         process.exit(1);
       }
+      s.stop(pc.green('Reset database & nạp migrations thành công!'));
+    };
 
-      s.message('Đang áp dụng Plugins hệ sinh thái...');
-      spawnSync('node', ['scripts/plugins/manage_plugins.mjs', '--install'], { cwd: idRoot, stdio: 'ignore', shell: true });
-
-      s.stop(pc.green('Reset & Đồng bộ Local Database thành công!'));
-    } else if (action === 'plugins') {
-      s.start('Đang đồng bộ Plugins vào Local DB...');
+    const runPlugins = () => {
+      s.start('Đang áp dụng Plugins hệ sinh thái...');
       const res = spawnSync('node', ['scripts/plugins/manage_plugins.mjs', '--install'], { cwd: idRoot, stdio: 'inherit', shell: true });
-      s.stop(pc.green('Hoàn tất đồng bộ Plugins!'));
-    } else if (action === 'seed') {
+      if (res.status !== 0) {
+        s.stop(pc.red('Lỗi khi đồng bộ plugins.'));
+      } else {
+        s.stop(pc.green('Đồng bộ Plugins hệ sinh thái thành công!'));
+      }
+    };
+
+    const runSeed = () => {
       s.start('Đang chạy Snippet 05 Seed Simulation Data...');
       const snippetPath = path.join(idRoot, 'supabase', 'snippets', '05_simulate_end_to_end_integration.sql');
       const containerCheck = spawnSync('docker', ['ps', '--filter', 'name=supabase_db', '--format', '{{.Names}}'], { encoding: 'utf8', shell: true });
@@ -141,7 +150,9 @@ async function main() {
       } else {
         s.stop(pc.red('Không tìm thấy container database.'));
       }
-    } else if (action === 'status') {
+    };
+
+    const runStatus = () => {
       s.start('Đang truy vấn số lượng bảng trong từng schema...');
       const snippetPath = path.join(idRoot, 'supabase', 'snippets', '01_audit_schemas_and_isolation.sql');
       const containerCheck = spawnSync('docker', ['ps', '--filter', 'name=supabase_db', '--format', '{{.Names}}'], { encoding: 'utf8', shell: true });
@@ -156,6 +167,22 @@ async function main() {
           shell: true,
         });
       }
+    };
+
+    if (action === 'full-cycle') {
+      runReset();
+      runPlugins();
+      runSeed();
+      runStatus();
+    } else if (action === 'reset') {
+      runReset();
+      runPlugins();
+    } else if (action === 'plugins') {
+      runPlugins();
+    } else if (action === 'seed') {
+      runSeed();
+    } else if (action === 'status') {
+      runStatus();
     }
 
     note(
