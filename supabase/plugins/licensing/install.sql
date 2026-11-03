@@ -1,6 +1,6 @@
 -- ============================================================================
 -- TUQUET-CLOUD PLUGIN: SUBSCRIPTIONS, QUOTA & PAYMENT GATEWAY (INSTALLATION)
--- Plugin ID: subscriptions
+-- Plugin ID: licensing
 -- Version: 1.2.0
 -- Architecture: PostgreSQL Dedicated Schema Isolation (schema: billing)
 -- ============================================================================
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS billing.plans (
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.plans IS '[Plugin: subscriptions] SaaS subscription tiers defining resource limits and pricing';
+COMMENT ON TABLE billing.plans IS '[Plugin: licensing] SaaS subscription tiers defining resource limits and pricing';
 
 CREATE TABLE IF NOT EXISTS billing.subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS billing.subscriptions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.subscriptions IS '[Plugin: subscriptions] Active tenant subscription mapping to a billing plan';
+COMMENT ON TABLE billing.subscriptions IS '[Plugin: licensing] Active tenant subscription mapping to a billing plan';
 
 CREATE TABLE IF NOT EXISTS billing.usage_meters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS billing.usage_meters (
     CONSTRAINT uq_billing_tenant_metric UNIQUE (tenant_id, metric_name)
 );
 
-COMMENT ON TABLE billing.usage_meters IS '[Plugin: subscriptions] Generic usage counters tracked per tenant and metric';
+COMMENT ON TABLE billing.usage_meters IS '[Plugin: licensing] Generic usage counters tracked per tenant and metric';
 
 -- 2.2. Tenant Xu Prepaid Wallet & Append-Only Transaction Ledger
 CREATE TABLE IF NOT EXISTS billing.wallets (
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS billing.wallets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.wallets IS '[Plugin: subscriptions] Tenant prepaid virtual currency wallet measured in integer Xu (credits)';
+COMMENT ON TABLE billing.wallets IS '[Plugin: licensing] Tenant prepaid virtual currency wallet measured in integer Xu (credits)';
 
 CREATE TABLE IF NOT EXISTS billing.wallet_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS billing.wallet_transactions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.wallet_transactions IS '[Plugin: subscriptions] Immutable append-only audit ledger of all Tenant Xu balance mutations';
+COMMENT ON TABLE billing.wallet_transactions IS '[Plugin: licensing] Immutable append-only audit ledger of all Tenant Xu balance mutations';
 
 CREATE INDEX IF NOT EXISTS idx_billing_wallet_tx_tenant ON billing.wallet_transactions (tenant_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_billing_wallet_tx_created_brin ON billing.wallet_transactions USING brin (created_at);
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS billing.payment_gateways (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.payment_gateways IS '[Plugin: subscriptions] Public registry of extensible payment gateways and Xu conversion rates';
+COMMENT ON TABLE billing.payment_gateways IS '[Plugin: licensing] Public registry of extensible payment gateways and Xu conversion rates';
 
 CREATE TABLE IF NOT EXISTS billing.payment_gateway_secrets (
     gateway_id TEXT PRIMARY KEY REFERENCES billing.payment_gateways(id) ON DELETE CASCADE,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS billing.payment_gateway_secrets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.payment_gateway_secrets IS '[Plugin: subscriptions] Isolated webhook HMAC secrets and API keys (Service Role & Platform Admin ONLY)';
+COMMENT ON TABLE billing.payment_gateway_secrets IS '[Plugin: licensing] Isolated webhook HMAC secrets and API keys (Service Role & Platform Admin ONLY)';
 
 CREATE TABLE IF NOT EXISTS billing.payment_intents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS billing.payment_intents (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.payment_intents IS '[Plugin: subscriptions] Unified payment intent state machine supporting Tenant and Guest Storefront checkouts';
+COMMENT ON TABLE billing.payment_intents IS '[Plugin: licensing] Unified payment intent state machine supporting Tenant and Guest Storefront checkouts';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_billing_payment_intents_provider_tx
     ON billing.payment_intents (provider_tx_id)
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS billing.bank_receiving_accounts (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
-COMMENT ON TABLE billing.bank_receiving_accounts IS '[Plugin: subscriptions] Dynamic receiving account pool supporting MMO multi-bank rotation and daily limit guards';
+COMMENT ON TABLE billing.bank_receiving_accounts IS '[Plugin: licensing] Dynamic receiving account pool supporting MMO multi-bank rotation and daily limit guards';
 
 CREATE INDEX IF NOT EXISTS idx_billing_bank_accounts_active ON billing.bank_receiving_accounts (is_active, status, priority ASC);
 
@@ -821,7 +821,7 @@ BEGIN
         WHERE tenant_id = v_intent.tenant_id;
     END IF;
 
-    -- 8. Emit transactional outbox event for downstream consumers (e.g. commerce.orders fulfillment)
+    -- 8. Emit transactional outbox event for downstream consumers (e.g. medusa.orders fulfillment)
     IF EXISTS (
         SELECT 1 FROM information_schema.routines
         WHERE routine_schema = 'events' AND routine_name = 'emit_event'
@@ -938,26 +938,26 @@ CREATE POLICY "bank_accounts_admin_full_policy" ON billing.bank_receiving_accoun
 -- 6. Permissions
 INSERT INTO public.permissions (id, module, description)
 VALUES 
-    ('subscriptions:read',   'billing', 'View subscription plans and current tenant status'),
-    ('subscriptions:manage', 'billing', 'Upgrade, downgrade, or cancel tenant subscription'),
-    ('quota:read',           'billing', 'View usage meters and limits'),
-    ('wallets:read',         'billing', 'View tenant Xu wallet balance and transaction ledger'),
-    ('wallets:manage',       'billing', 'Top up or spend from tenant Xu wallet'),
-    ('payments:read',        'billing', 'View payment gateways and payment intents'),
-    ('payments:manage',      'billing', 'Configure payment gateways and approve manual_review intents')
+    ('licensing:read',                 'licensing', 'View subscription plans and current tenant status'),
+    ('licensing:manage',               'licensing', 'Upgrade, downgrade, or cancel tenant subscription'),
+    ('licensing:quota:read',           'licensing', 'View usage meters and limits'),
+    ('licensing:wallets:read',         'licensing', 'View tenant Xu wallet balance and transaction ledger'),
+    ('licensing:wallets:manage',       'licensing', 'Top up or spend from tenant Xu wallet'),
+    ('licensing:payments:read',        'licensing', 'View payment gateways and payment intents'),
+    ('licensing:payments:manage',      'licensing', 'Configure payment gateways and approve manual_review intents')
 ON CONFLICT (id) DO UPDATE SET description = EXCLUDED.description;
 
 INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM public.roles r
 CROSS JOIN (
     VALUES
-        ('subscriptions:read'),
-        ('subscriptions:manage'),
-        ('quota:read'),
-        ('wallets:read'),
-        ('wallets:manage'),
-        ('payments:read'),
-        ('payments:manage')
+        ('licensing:read'),
+        ('licensing:manage'),
+        ('licensing:quota:read'),
+        ('licensing:wallets:read'),
+        ('licensing:wallets:manage'),
+        ('licensing:payments:read'),
+        ('licensing:payments:manage')
 ) AS p(id)
 WHERE r.tenant_id IS NULL AND r.name IN ('owner', 'admin')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
@@ -965,15 +965,15 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM public.roles r
 CROSS JOIN (
-    VALUES ('subscriptions:read'), ('quota:read'), ('wallets:read'), ('payments:read')
+    VALUES ('licensing:read'), ('licensing:quota:read'), ('licensing:wallets:read'), ('licensing:payments:read')
 ) AS p(id)
 WHERE r.tenant_id IS NULL AND r.name = 'member'
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- 7. Register Plugin in Master Registry
 SELECT public.register_plugin(
-    'subscriptions',
-    'Subscriptions, Quota & Payment Gateway',
+    'licensing',
+    'Licensing & Quotas',
     '1.2.0',
     'billing',
     ARRAY[]::TEXT[],

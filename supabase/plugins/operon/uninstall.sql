@@ -7,10 +7,7 @@
 DROP SCHEMA IF EXISTS operon CASCADE;
 
 -- Unregister plugin status
-DO $$ BEGIN
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'plugins') THEN
-        UPDATE public.plugins 
-        SET status = 'uninstalled', updated_at = now()
-        WHERE id = 'operon';
-    END IF;
-END $$;
+SELECT public.unregister_plugin('operon');
+
+DELETE FROM public.role_permissions WHERE permission_id LIKE 'operon:%';
+DELETE FROM public.permissions WHERE module = 'operon';

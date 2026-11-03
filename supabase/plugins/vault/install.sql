@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS secrets.credentials (
 COMMENT ON TABLE secrets.credentials IS '[Plugin: secrets] Tenant credentials, ciphertext only (referenced as {{secrets.<name>}})';
 
 CREATE TABLE IF NOT EXISTS secrets.devices (
-    device_id   UUID PRIMARY KEY REFERENCES workers.devices(id) ON DELETE CASCADE,
+    device_id   UUID PRIMARY KEY REFERENCES operon.devices(id) ON DELETE CASCADE,
     tenant_id   UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     public_key  BYTEA NOT NULL,        -- 32B X25519
     wrapped_dek BYTEA,                 -- DEK sealed to this device (crypto_box_seal)
@@ -132,14 +132,14 @@ END; $$;
 
 CREATE OR REPLACE FUNCTION secrets._verify_device(p_device_id UUID, p_device_token TEXT)
 RETURNS UUID LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = workers, public, extensions, pg_temp AS $$
+SET search_path = operon, public, extensions, pg_temp AS $$
 DECLARE v_tenant UUID; v_hash TEXT;
 BEGIN
     IF p_device_id IS NULL OR p_device_token IS NULL OR p_device_token = '' THEN
         RAISE EXCEPTION 'Device credentials required';
     END IF;
     v_hash := encode(extensions.digest(p_device_token, 'sha256'), 'hex');
-    SELECT tenant_id INTO v_tenant FROM workers.devices
+    SELECT tenant_id INTO v_tenant FROM operon.devices
     WHERE id = p_device_id AND device_token_hash = v_hash;
     IF v_tenant IS NULL THEN
         RAISE EXCEPTION 'Invalid or unknown device credentials';
@@ -325,9 +325,9 @@ GRANT EXECUTE ON FUNCTION public.secret_rotate(UUID, TEXT) TO anon, authenticate
 -- ---------------------------------------------------------------------------
 INSERT INTO public.permissions (id, module, description)
 VALUES
-    ('secrets:credentials:read',   'secrets', 'Xem danh mục credential của tenant (tên/metadata; giá trị không bao giờ được trả về)'),
-    ('secrets:credentials:manage', 'secrets', 'Tạo, sửa, xoá credential và đồng bộ khoá với Cloud (push/pull)'),
-    ('secrets:store:rotate',       'secrets', 'Xoay DEK của tenant và tái bọc cho mọi thiết bị đã đăng ký')
+    ('secrets:credentials:read',   'vault', 'Xem danh mục credential của tenant (tên/metadata; giá trị không bao giờ được trả về)'),
+    ('secrets:credentials:manage', 'vault', 'Tạo, sửa, xoá credential và đồng bộ khoá với Cloud (push/pull)'),
+    ('secrets:store:rotate',       'vault', 'Xoay DEK của tenant và tái bọc cho mọi thiết bị đã đăng ký')
 ON CONFLICT (id) DO UPDATE SET description = EXCLUDED.description;
 
 INSERT INTO public.role_permissions (role_id, permission_id)

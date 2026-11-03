@@ -1191,21 +1191,21 @@ CREATE POLICY "system_plugins_manage_admin" ON public.system_plugins
 -- ============================================================================
 
 INSERT INTO public.permissions (id, module, description) VALUES
-    ('tenants:read',    'tenants', 'Xem thông tin tổ chức'),
-    ('tenants:update',  'tenants', 'Cập nhật cấu hình và thông tin tổ chức'),
-    ('tenants:delete',  'tenants', 'Xóa hoàn toàn tổ chức'),
-    ('members:read',    'members', 'Xem danh sách thành viên trong tổ chức'),
-    ('members:invite',  'members', 'Mời thành viên mới vào tổ chức'),
-    ('members:update',  'members', 'Cập nhật trạng thái thành viên'),
-    ('members:manage',  'members', 'Gán và thu hồi vai trò của thành viên'),
-    ('members:delete',  'members', 'Xóa thành viên khỏi tổ chức'),
-    ('roles:read',      'roles',   'Xem danh sách các vai trò và quyền hạn'),
-    ('roles:manage',    'roles',   'Tạo, sửa và xóa các vai trò tùy chỉnh (Custom Roles)'),
-    ('billing:read',    'billing', 'Xem thông tin gói cước và hóa đơn'),
-    ('billing:manage',  'billing', 'Thay đổi phương thức thanh toán và nâng cấp gói'),
-    ('audit:read',      'audit',   'Xem nhật ký kiểm toán hệ thống'),
-    ('plugins:read',    'system',  'Xem danh mục plugin đã cài đặt và cấu hình'),
-    ('plugins:manage',  'system',  'Cài đặt, nâng cấp hoặc gỡ bỏ các plugin hệ thống')
+    ('tenants:read',    'identity', 'Xem thông tin tổ chức'),
+    ('tenants:update',  'identity', 'Cập nhật cấu hình và thông tin tổ chức'),
+    ('tenants:delete',  'identity', 'Xóa hoàn toàn tổ chức'),
+    ('members:read',    'identity', 'Xem danh sách thành viên trong tổ chức'),
+    ('members:invite',  'identity', 'Mời thành viên mới vào tổ chức'),
+    ('members:update',  'identity', 'Cập nhật trạng thái thành viên'),
+    ('members:manage',  'identity', 'Gán và thu hồi vai trò của thành viên'),
+    ('members:delete',  'identity', 'Xóa thành viên khỏi tổ chức'),
+    ('roles:read',      'identity',   'Xem danh sách các vai trò và quyền hạn'),
+    ('roles:manage',    'identity',   'Tạo, sửa và xóa các vai trò tùy chỉnh (Custom Roles)'),
+    ('billing:read',    'licensing', 'Xem thông tin gói cước và hóa đơn'),
+    ('billing:manage',  'licensing', 'Thay đổi phương thức thanh toán và nâng cấp gói'),
+    ('audit:read',      'identity',   'Xem nhật ký kiểm toán hệ thống'),
+    ('plugins:read',    'identity',  'Xem danh mục plugin đã cài đặt và cấu hình'),
+    ('plugins:manage',  'identity',  'Cài đặt, nâng cấp hoặc gỡ bỏ các plugin hệ thống')
 ON CONFLICT (id) DO UPDATE SET 
     description = EXCLUDED.description,
     module = EXCLUDED.module;
@@ -1243,10 +1243,10 @@ INSERT INTO public.role_permissions (role_id, permission_id) VALUES
     ('00000000-0000-0000-0000-000000000004', 'roles:read')
 ON CONFLICT DO NOTHING;
 
--- 8.5. Tự Động Đăng Ký Core IAM vào Bảng System Plugins (is_system = TRUE)
+-- 8.5. Tự Động Đăng Ký Core Identity vào Bảng System Plugins (is_system = TRUE)
 SELECT public.register_plugin(
-    'core-iam',
-    'Multi-Tenant IAM & RBAC Engine',
+    'identity',
+    'Identity & Organizations',
     '1.0.0',
     'public',
     ARRAY[]::TEXT[],

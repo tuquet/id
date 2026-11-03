@@ -1,6 +1,6 @@
 -- ============================================================================
 -- OPN-CLOUD PLUGIN: TRANSACTIONAL OUTBOX & WEBHOOKS (INSTALLATION SCRIPT)
--- Plugin ID: webhooks
+-- Plugin ID: dispatch
 -- Version: 1.0.0
 -- Architecture: PostgreSQL Dedicated Schema Isolation (schema: events)
 -- ============================================================================
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS events.outbox (
     processed_at TIMESTAMPTZ
 );
 
-COMMENT ON TABLE events.outbox IS '[Plugin: webhooks] Transactional event queue for reliable async processing and webhook dispatching';
+COMMENT ON TABLE events.outbox IS '[Plugin: dispatch] Transactional event queue for reliable async processing and webhook dispatching';
 
 CREATE INDEX IF NOT EXISTS idx_events_outbox_status ON events.outbox (status, created_at) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS idx_events_outbox_tenant ON events.outbox (tenant_id);
@@ -130,7 +130,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION events.claim_outbox_batch(INT) TO service_role;
 
-COMMENT ON FUNCTION events.emit_event IS '[Plugin: webhooks] Programmatic API to enqueue domain events into the Transactional Outbox';
+COMMENT ON FUNCTION events.emit_event IS '[Plugin: dispatch] Programmatic API to enqueue domain events into the Transactional Outbox';
 
 CREATE OR REPLACE FUNCTION events.log_member_event_to_outbox()
 RETURNS TRIGGER
@@ -184,20 +184,20 @@ CREATE POLICY "deliveries_select_admin" ON events.deliveries FOR SELECT TO authe
 -- 5. Permissions
 INSERT INTO public.permissions (id, module, description)
 VALUES 
-    ('webhooks:manage', 'integrations', 'Create, update, and delete outgoing webhook endpoints'),
-    ('outbox:read',     'integrations', 'Inspect background outbox event stream and delivery status')
+    ('dispatch:manage', 'dispatch', 'Create, update, and delete outgoing webhook endpoints'),
+    ('dispatch:outbox:read',     'dispatch', 'Inspect background outbox event stream and delivery status')
 ON CONFLICT (id) DO UPDATE SET description = EXCLUDED.description;
 
 INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM public.roles r
-CROSS JOIN (VALUES ('webhooks:manage'), ('outbox:read')) AS p(id)
+CROSS JOIN (VALUES ('dispatch:manage'), ('dispatch:outbox:read')) AS p(id)
 WHERE r.tenant_id IS NULL AND r.name IN ('owner', 'admin')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- 6. Register Plugin in Master Registry
 SELECT public.register_plugin(
-    'webhooks',
-    'Transactional Outbox & Webhooks',
+    'dispatch',
+    'Dispatch & Events',
     '1.0.0',
     'events',
     ARRAY[]::TEXT[],

@@ -204,20 +204,62 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 7. Register Plugin Metadata in Platform Core
-DO $$ BEGIN
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'plugins') THEN
-        INSERT INTO public.plugins (id, name, version, status, description)
-        VALUES (
-            'operon',
-            'Operon Automation Engine',
-            '1.0.0',
-            'installed',
-            'Unified Antidetect Browser Profiles, Compute Fleet Nodes & Automation Scheduler'
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            status = 'installed',
-            version = '1.0.0',
-            updated_at = now();
-    END IF;
-END $$;
+-- 7. Permissions & Registration
+INSERT INTO public.permissions (id, module, description)
+VALUES 
+    ('operon:workflows:read',           'operon', 'View workflow graphs and definitions'),
+    ('operon:workflows:manage',         'operon', 'Create, update, and delete workflow DAGs'),
+    ('operon:jobs:read',                'operon', 'View execution jobs and step logs'),
+    ('operon:jobs:run',                 'operon', 'Trigger and cancel workflow execution jobs'),
+    ('operon:devices:read',             'operon', 'View connected worker daemon nodes and telemetry'),
+    ('operon:devices:manage',           'operon', 'Enroll, configure, or drain worker fleet nodes'),
+    ('operon:browser_profiles:read',    'operon', 'View antidetect browser profiles and sessions'),
+    ('operon:browser_profiles:manage',  'operon', 'Create, launch, and manage browser profiles'),
+    ('operon:proxies:read',             'operon', 'View proxy pool configurations'),
+    ('operon:proxies:manage',           'operon', 'Add, update, and test network proxies')
+ON CONFLICT (id) DO UPDATE SET description = EXCLUDED.description, module = EXCLUDED.module;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM public.roles r
+CROSS JOIN (
+    VALUES
+        ('operon:workflows:read'),
+        ('operon:workflows:manage'),
+        ('operon:jobs:read'),
+        ('operon:jobs:run'),
+        ('operon:devices:read'),
+        ('operon:devices:manage'),
+        ('operon:browser_profiles:read'),
+        ('operon:browser_profiles:manage'),
+        ('operon:proxies:read'),
+        ('operon:proxies:manage')
+) AS p(id)
+WHERE r.tenant_id IS NULL AND r.name IN ('owner', 'admin')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM public.roles r
+CROSS JOIN (
+    VALUES
+        ('operon:workflows:read'),
+        ('operon:jobs:read'),
+        ('operon:jobs:run'),
+        ('operon:devices:read'),
+        ('operon:browser_profiles:read'),
+        ('operon:proxies:read')
+) AS p(id)
+WHERE r.tenant_id IS NULL AND r.name = 'member'
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- 8. Register Plugin in Master Registry
+SELECT public.register_plugin(
+    'operon',
+    'Operon Automation Engine',
+    '1.0.0',
+    'operon',
+    ARRAY['identity']::TEXT[],
+    'Unified Antidetect Browser Profiles, Compute Fleet Nodes & Automation Scheduler',
+    TRUE,
+    '{"protocol": "operon.automation.v1"}'::jsonb
+);
+

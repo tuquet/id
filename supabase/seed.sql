@@ -2,8 +2,8 @@
 -- SUPABASE SEED DATA: TUQUET ECOSYSTEM (DEVELOPMENT & QA ENVIRONMENT)
 -- Description: Foundation data for Testing Admin Console & Multi-Tenancy
 -- Universal Password for ALL accounts: TestPassword123!
--- NOTE: workers.devices is NOT seeded here (dynamically enrolled via Tauri Desk)
---       automation.jobs is NOT seeded here (dynamically created on Run)
+-- NOTE: operon.devices is NOT seeded here (dynamically enrolled via Tauri Desk)
+--       operon.jobs is NOT seeded here (dynamically created on Run)
 -- ============================================================================
 
 SET search_path = public, extensions, auth;
@@ -225,8 +225,8 @@ END $$;
 -- 6. Central Proxy Pool (Seed 10 Proxies across VN, SG, US, JP)
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'workers' AND table_name = 'proxies') THEN
-        INSERT INTO workers.proxies (
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'operon' AND table_name = 'proxies') THEN
+        INSERT INTO operon.proxies (
             id, tenant_id, host, port, protocol, country_code, city, status, latency_ms, tags, is_residential
         )
         SELECT 
@@ -252,8 +252,8 @@ END $$;
 -- Note: locked_by_device_id is NULL (unlocked, ready to be launched by enrolled device)
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'workers' AND table_name = 'browsers') THEN
-        INSERT INTO workers.browsers (
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'operon' AND table_name = 'browser_profiles') THEN
+        INSERT INTO operon.browser_profiles (
             id, tenant_id, name, browser_type, engine_version,
             fingerprint_seed, os_platform, os_version, browser_brand,
             cpu_cores, ram_gb, timezone, locale, accept_languages,
@@ -315,8 +315,8 @@ END $$;
 -- 8. Sample Workflows (Published AST graphs ready to be run)
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'automation' AND table_name = 'workflows') THEN
-        INSERT INTO automation.workflows (
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'operon' AND table_name = 'workflows') THEN
+        INSERT INTO operon.workflows (
             id, tenant_id, name, description, version, status, graph_data, settings, created_by
         ) VALUES 
             (
@@ -377,8 +377,8 @@ DECLARE
     v_prod_proxy UUID := 'cb000000-0000-0000-0000-000000000001';
     v_prod_soft  UUID := 'cb000000-0000-0000-0000-000000000002';
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'commerce' AND table_name = 'categories') THEN
-        INSERT INTO commerce.categories (id, slug, name, description, icon, sort_order)
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'medusa' AND table_name = 'categories') THEN
+        INSERT INTO medusa.categories (id, slug, name, description, icon, sort_order)
         VALUES 
             (v_cat_proxy, 'proxies', 'Hạ Tầng Proxy', 'Bể proxy dân cư và datacenter tốc độ cao', 'globe', 1),
             (v_cat_soft, 'software', 'Bản Quyền Phần Mềm', 'Giấy phép kích hoạt Worker & Bot', 'cpu', 2),
@@ -386,8 +386,8 @@ BEGIN
         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name;
     END IF;
 
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'commerce' AND table_name = 'products') THEN
-        INSERT INTO commerce.products (id, category_id, slug, name, short_description, product_type, visibility)
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'medusa' AND table_name = 'products') THEN
+        INSERT INTO medusa.products (id, category_id, slug, name, short_description, product_type, visibility)
         VALUES 
             (
                 v_prod_proxy, v_cat_proxy, 'dedicated-proxy-vn-30d',
@@ -408,8 +408,8 @@ END $$;
 -- 10. Clean Stale Mock Devices (Ensure device list reflects ONLY real client enrollments)
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'workers' AND table_name = 'devices') THEN
-        DELETE FROM workers.devices WHERE id IN (
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'operon' AND table_name = 'devices') THEN
+        DELETE FROM operon.devices WHERE id IN (
             'd0000000-0000-0000-0000-000000000001',
             'd0000000-0000-0000-0000-000000000002',
             'd0000000-0000-0000-0000-000000000003'
