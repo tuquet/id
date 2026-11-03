@@ -2,16 +2,18 @@
 
 /**
  * ==============================================================================
- * DATABASE RESET & SCHEMA SYNCHRONIZATION CLI (Node.js Cross-Platform)
+ * DATABASE RESET & SCHEMA SYNCHRONIZATION CLI (@clack/prompts Interactive)
  * ==============================================================================
  * Usage:
- *   node scripts/reset_database.mjs            (Default: --local)
- *   node scripts/reset_database.mjs --local
- *   node scripts/reset_database.mjs --cloud
- *   node scripts/reset_database.mjs --no-seed
+ *   node scripts/reset_database.mjs            (Interactive or Default --local)
+ *   node scripts/reset_database.mjs --local    (Direct Local)
+ *   node scripts/reset_database.mjs --cloud    (Direct Cloud)
+ *   node scripts/reset_database.mjs --no-seed  (Skip Seed)
  * ==============================================================================
  */
 
+import { intro, outro, select, confirm, spinner, note, isCancel, cancel } from '@clack/prompts';
+import pc from 'picocolors';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -21,55 +23,84 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const idRoot = path.resolve(__dirname, '..');
 
-// 1. Phân tích tham số dòng lệnh
-const args = process.argv.slice(2);
-const isCloud = args.includes('--cloud');
-const isLocal = args.includes('--local') || !isCloud; // Mặc định là local
-const noSeed = args.includes('--no-seed');
-const target = isCloud ? 'cloud' : 'local';
+// 1. Phân tích cờ dòng lệnh
+const rawArgs = process.argv.slice(2);
+const flagCloud = rawArgs.includes('--cloud');
+const flagLocal = rawArgs.includes('--local');
+const noSeed = rawArgs.includes('--no-seed');
 
-console.log('\x1b[36m%s\x1b[0m', '=================================================================');
-console.log('\x1b[36m%s\x1b[0m', ' [ID PLATFORM] DATABASE RESET & SCHEMA SYNCHRONIZATION');
-console.log('\x1b[33m%s\x1b[0m', ` Target Environment : ${target.toUpperCase()}`);
-console.log('\x1b[33m%s\x1b[0m', ` Working Directory  : ${idRoot}`);
-console.log('\x1b[36m%s\x1b[0m', '=================================================================');
+async function main() {
+  console.clear();
+  intro(pc.bgCyan(pc.black(' TUQUET ID PLATFORM: DATABASE RESET & SYNC ')));
 
-function run(command, cmdArgs, options = {}) {
-  const isWindows = process.platform === 'win32';
-  const executable = isWindows && !command.endsWith('.exe') && !command.endsWith('.cmd')
-    ? `${command}.cmd`
-    : command;
+  let target = 'local';
 
-  console.log('\x1b[90m%s\x1b[0m', `> ${command} ${cmdArgs.join(' ')}`);
+  // Nếu người dùng không chỉ định cờ, hiển thị giao diện Clack tương tác đẹp mắt
+  if (!flagCloud && !flagLocal) {
+    const selected = await select({
+      message: 'Chọn môi trường cơ sở dữ liệu cần Reset & Đồng bộ:',
+      options: [
+        {
+          value: 'local',
+          label: `${pc.green('● Local Database')} (Docker 127.0.0.1:55322)`,
+          hint: 'Mặc định - An toàn, chạy cục bộ',
+        },
+        {
+          value: 'cloud',
+          label: `${pc.red('▲ Supabase Cloud')} (Project: dswhacsoaxgpfnkaxnhz)`,
+          hint: 'CẢNH BÁO: Xóa sạch & nạp lại schema trên Cloud',
+        },
+      ],
+      initialValue: 'local',
+    });
 
-  const result = spawnSync(command, cmdArgs, {
-    cwd: idRoot,
-    stdio: 'inherit',
-    shell: true,
-    env: { ...process.env, ...options.env },
-  });
-
-  if (result.error) {
-    console.error('\x1b[31m%s\x1b[0m', `[-] Command execution failed: ${result.error.message}`);
-    process.exit(1);
+    if (isCancel(selected)) {
+      cancel('Đã hủy thao tác.');
+      process.exit(0);
+    }
+    target = selected;
+  } else {
+    target = flagCloud ? 'cloud' : 'local';
   }
 
-  if (result.status !== 0 && !options.ignoreError) {
-    console.error('\x1b[31m%s\x1b[0m', `[-] Command exited with code ${result.status}`);
-    process.exit(result.status || 1);
+  // Xác nhận nếu chọn môi trường Cloud
+  if (target === 'cloud') {
+    const shouldProceed = await confirm({
+      message: `${pc.red('Bạn có chắc chắn muốn RESET cơ sở dữ liệu trên SUPABASE CLOUD không?')}`,
+      initialValue: false,
+    });
+
+    if (isCancel(shouldProceed) || !shouldProceed) {
+      cancel('Đã hủy reset Cloud DB.');
+      process.exit(0);
+    }
   }
 
-  return result;
-}
+  const s = spinner();
 
-try {
   if (target === 'local') {
-    console.log('\n\x1b[32m%s\x1b[0m', '[1/2] Resetting Local Supabase Database...');
+    s.start('Đang kiểm tra Docker daemon và Supabase Local...');
+
     const localArgs = ['db', 'reset', '--local'];
     if (noSeed) localArgs.push('--no-seed');
-    run('supabase', localArgs);
 
-    console.log('\n\x1b[32m%s\x1b[0m', '[2/2] Running Local E2E Simulation Snippet...');
+    const result = spawnSync('supabase', localArgs, {
+      cwd: idRoot,
+      encoding: 'utf8',
+      shell: true,
+    });
+
+    if (result.status !== 0) {
+      s.stop(pc.red('Thất bại khi reset Local Database'));
+      note(
+        result.stderr || result.stdout || 'Không thể kết nối Docker daemon. Vui lòng đảm bảo Docker Desktop đang chạy!',
+        'Chi tiết lỗi'
+      );
+      outro(pc.red('Quá trình thất bại. Vui lòng thử lại sau khi mở Docker.'));
+      process.exit(1);
+    }
+
+    s.message('Đang áp dụng E2E Test Simulation Snippet vào Local DB...');
     const snippetPath = path.join(idRoot, 'supabase', 'snippets', '05_simulate_end_to_end_integration.sql');
     if (fs.existsSync(snippetPath)) {
       const containerCheck = spawnSync('docker', ['ps', '--filter', 'name=supabase_db', '--format', '{{.Names}}'], {
@@ -82,15 +113,20 @@ try {
         const sqlContent = fs.readFileSync(snippetPath, 'utf8');
         spawnSync('docker', ['exec', '-i', containerName, 'psql', '-U', 'postgres', '-d', 'postgres'], {
           input: sqlContent,
-          stdio: ['pipe', 'inherit', 'inherit'],
+          stdio: ['pipe', 'pipe', 'pipe'],
           shell: true,
         });
       }
     }
 
-    console.log('\n\x1b[32m%s\x1b[0m', '✔ SUCCESS: Local database reset and initialized successfully!');
+    s.stop(pc.green('Hoàn tất Reset & Khởi tạo Local Database thành công!'));
+    note(
+      `• Database: postgres://postgres:postgres@127.0.0.1:55322/postgres\n• API Gateway: http://127.0.0.1:55321\n• Studio: http://127.0.0.1:55323`,
+      'Thông tin kết nối cục bộ'
+    );
   } else {
-    console.log('\n\x1b[33m%s\x1b[0m', '[1/2] Configuring Gateway Proxy & Supabase Credentials...');
+    s.start('Đang thiết lập Gateway Proxy & kết nối Supabase Cloud...');
+
     const cloudEnv = {
       HTTP_PROXY: 'http://127.0.0.1:8118',
       HTTPS_PROXY: 'http://127.0.0.1:8118',
@@ -99,15 +135,34 @@ try {
       SUPABASE_DB_PASSWORD: 'b8aA5CDM4Xp0Kwr9',
     };
 
-    console.log('\x1b[33m%s\x1b[0m', '[2/2] Resetting Remote Supabase Cloud Database (Linked)...');
     const cloudArgs = ['db', 'reset', '--linked', '--yes'];
     if (noSeed) cloudArgs.push('--no-seed');
 
-    run('supabase', cloudArgs, { env: cloudEnv });
+    const result = spawnSync('supabase', cloudArgs, {
+      cwd: idRoot,
+      encoding: 'utf8',
+      shell: true,
+      env: { ...process.env, ...cloudEnv },
+    });
 
-    console.log('\n\x1b[32m%s\x1b[0m', '✔ SUCCESS: Cloud Supabase database reset completed!');
+    if (result.status !== 0) {
+      s.stop(pc.red('Thất bại khi reset Cloud Database'));
+      note(result.stderr || result.stdout || 'Lỗi kết nối tới Supabase Cloud.', 'Chi tiết lỗi');
+      outro(pc.red('Quá trình reset Cloud thất bại.'));
+      process.exit(1);
+    }
+
+    s.stop(pc.green('Hoàn tất Reset & Khởi tạo Supabase Cloud Database thành công!'));
+    note(
+      `• Project: dswhacsoaxgpfnkaxnhz\n• API Base: https://dswhacsoaxgpfnkaxnhz.supabase.co\n• PgBouncer Pooler: aws-0-ap-northeast-1.pooler.supabase.com:6543`,
+      'Thông tin kết nối Cloud'
+    );
   }
-} catch (err) {
-  console.error('\x1b[31m%s\x1b[0m', `\n[-] Fatal Error: ${err.message}`);
-  process.exit(1);
+
+  outro(pc.cyan('✨ Hệ thống đã sẵn sàng cho bước tiếp theo!'));
 }
+
+main().catch((err) => {
+  console.error(pc.red(`\n[-] Lỗi nghiêm trọng: ${err.message}`));
+  process.exit(1);
+});

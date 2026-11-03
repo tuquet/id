@@ -1,0 +1,20 @@
+{
+  "name": "@tuquet/id",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tuquet ID - SSOT Identity, RBAC, Multi-Tenant Licensing and Operon Schema Engine",
+  "type": "module",
+  "scripts": {
+    "db:reset": "node ./scripts/reset_database.mjs",
+    "db:reset:local": "node ./scripts/reset_database.mjs --local",
+    "db:reset:cloud": "node ./scripts/reset_database.mjs --cloud"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/tuquet/id.git"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.8.1",
+    "picocolors": "^1.1.1"
+  }
+}
