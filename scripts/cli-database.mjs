@@ -36,12 +36,12 @@ async function main() {
       options: [
         {
           value: 'local',
-          label: `${pc.green('● local(id)')}: Docker Supabase (127.0.0.1:55322)`,
+          label: `${pc.green('local(id)')}: Docker Supabase (127.0.0.1:55322)`,
           hint: 'Mặc định - An toàn, phát triển cục bộ',
         },
         {
           value: 'cloud',
-          label: `${pc.red('▲ cloud(id)')}: Supabase Cloud (dswhacsoaxgpfnkaxnhz)`,
+          label: `${pc.red('cloud(id)')}: Supabase Cloud (dswhacsoaxgpfnkaxnhz)`,
           hint: 'CẢNH BÁO: Reset & đồng bộ lên remote Cloud',
         },
       ],
@@ -61,22 +61,22 @@ async function main() {
     options: [
       {
         value: 'reset',
-        label: `${pc.yellow('⟳ Reset Database & Sync Migrations')}`,
+        label: pc.yellow('Reset Database & Sync Migrations'),
         hint: 'Xóa sạch, nạp migrations: identity, licensing, operon',
       },
       {
         value: 'plugins',
-        label: `${pc.cyan('⚡ Sync Ecosystem Plugins')}`,
+        label: pc.cyan('Sync Ecosystem Plugins'),
         hint: 'Áp dụng: vault, licensing, dispatch, store, operon',
       },
       {
         value: 'seed',
-        label: `${pc.magenta('🌱 Seed E2E Mock Simulation Data')}`,
+        label: pc.magenta('Seed E2E Mock Simulation Data'),
         hint: 'Tạo admin user, Enterprise plan, Worker device test',
       },
       {
         value: 'status',
-        label: `${pc.blue('🔍 Kiểm tra cấu trúc Schemas & Bảng')}`,
+        label: pc.blue('Kiểm tra cấu trúc Schemas & Bảng'),
         hint: 'Chạy Snippet 01 audit số lượng bảng',
       },
     ],
@@ -198,7 +198,7 @@ async function main() {
     );
   }
 
-  outro(pc.cyan('✨ Hoàn tất tác vụ database!'));
+  outro(pc.cyan('Hoàn tất tác vụ database!'));
 }
 
 main().catch((err) => {
