@@ -13,7 +13,7 @@
 --   2. registers its public key   -> secret_register_device  -> receives the sealed DEK
 --   3. pulls ciphertext + nonce   -> secret_fetch            -> decrypts locally
 --
--- Requires: pgcrypto (extensions), pgsodium, supabase_vault, plugins `workers` + `core-iam`.
+-- Requires: pgcrypto (extensions), pgsodium, supabase_vault, plugins `operon` + `identity`.
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS pgsodium;
@@ -348,7 +348,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- 8. Plugin catalog
 -- ---------------------------------------------------------------------------
 INSERT INTO public.system_plugins (id, name, version, schema_name, is_system, dependencies, description)
-VALUES ('secrets', 'Encrypted Tenant Secret Store', '2.0.0', 'secrets', false,
-        ARRAY['workers', 'core-iam'],
+VALUES ('vault', 'Vault Secret Store', '1.0.0', 'secrets', true,
+        ARRAY['identity'],
         'Tenant secret store: Vault KEK -> per-tenant DEK -> device-sealed; client-side value encryption')
 ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version, description = EXCLUDED.description;

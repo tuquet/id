@@ -26,7 +26,7 @@ SELECT
     is_system,
     installed_at
 FROM public.system_plugins
-WHERE id = 'core-iam';
+WHERE id = 'identity';
 
 -- 3. Verify Default Roles & Permissions Count
 SELECT 
