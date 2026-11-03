@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "local(id): database",
+      "label": "local: database",
       "type": "shell",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--local"],
@@ -18,7 +18,7 @@
       "problemMatcher": []
     },
     {
-      "label": "cloud(id): database",
+      "label": "cloud: database",
       "type": "shell",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--cloud"],
