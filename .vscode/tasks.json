@@ -2,13 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "DB: Reset Local Database (Default)",
+      "label": "local(id): database",
       "type": "shell",
       "command": "node",
-      "args": [
-        "${workspaceFolder}/scripts/reset_database.mjs",
-        "--local"
-      ],
+      "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--local"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -21,14 +18,10 @@
       "problemMatcher": []
     },
     {
-      "label": "DB: Reset Cloud Database (Supabase Cloud)",
+      "label": "cloud(id): database",
       "type": "shell",
       "command": "node",
-      "args": [
-        "${workspaceFolder}/scripts/reset_database.mjs",
-        "--cloud"
-      ],
-      "group": "none",
+      "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--cloud"],
       "presentation": {
         "reveal": "always",
         "panel": "shared",
