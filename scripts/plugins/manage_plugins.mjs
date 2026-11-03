@@ -48,8 +48,8 @@ async function main() {
     const act = await select({
       message: 'Chọn hành động với Plugins hệ sinh thái:',
       options: [
-        { value: 'install', label: `${pc.green('Cài đặt')} (Install / Update all plugins)` },
-        { value: 'uninstall', label: `${pc.red('Gỡ bỏ')} (Uninstall all plugin schemas)` },
+        { value: 'install', label: pc.green('Cài đặt toàn bộ plugins') },
+        { value: 'uninstall', label: pc.red('Gỡ bỏ toàn bộ plugins') },
       ],
       initialValue: 'install',
     });

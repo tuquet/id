@@ -62,27 +62,27 @@ async function main() {
       {
         value: 'full-cycle',
         label: pc.green('Full Setup: Reset + Plugins + Seed + Audit'),
-        hint: 'Khuyên dùng: Xóa sạch, nạp migrations, cài plugins, nạp seed E2E và kiểm tra',
+        hint: 'Tự động chạy toàn bộ quy trình',
       },
       {
         value: 'reset',
         label: pc.yellow('Reset Database & Sync Migrations'),
-        hint: 'Chỉ xóa sạch và nạp migrations: identity, licensing, operon',
+        hint: 'Chỉ xóa sạch và nạp migrations',
       },
       {
         value: 'plugins',
         label: pc.cyan('Sync Ecosystem Plugins'),
-        hint: 'Áp dụng: vault, licensing, dispatch, store, operon',
+        hint: 'Áp dụng toàn bộ plugins',
       },
       {
         value: 'seed',
         label: pc.magenta('Seed E2E Mock Simulation Data'),
-        hint: 'Tạo admin user, Enterprise plan, Worker device test',
+        hint: 'Tạo admin user, Enterprise plan, Worker test',
       },
       {
         value: 'status',
         label: pc.blue('Kiểm tra cấu trúc Schemas & Bảng'),
-        hint: 'Chạy Snippet 01 audit số lượng bảng',
+        hint: 'Audit cấu trúc và số lượng bảng',
       },
     ],
     initialValue: 'full-cycle',
