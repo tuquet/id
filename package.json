@@ -7,7 +7,11 @@
   "scripts": {
     "db:reset": "node ./scripts/reset_database.mjs",
     "db:reset:local": "node ./scripts/reset_database.mjs --local",
-    "db:reset:cloud": "node ./scripts/reset_database.mjs --cloud"
+    "db:reset:cloud": "node ./scripts/reset_database.mjs --cloud",
+    "plugins:manage": "node ./scripts/plugins/manage_plugins.mjs",
+    "plugins:install": "node ./scripts/plugins/manage_plugins.mjs --install",
+    "plugins:uninstall": "node ./scripts/plugins/manage_plugins.mjs --uninstall",
+    "test:smoke": "node ./scripts/testing/smoke_test_cloud.mjs"
   },
   "repository": {
     "type": "git",

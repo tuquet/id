@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# ============================================================================
-# OPN-CLOUD TEST PRESET CLI (POSIX BASH WRAPPER)
-# Description: Delegates to Node.js CLI engine
-# ============================================================================
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-node "${SCRIPT_DIR}/test-cli.mjs" "$@"
