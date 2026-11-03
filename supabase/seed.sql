@@ -423,15 +423,12 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'system_plugins') THEN
         INSERT INTO public.system_plugins (id, name, description, version, is_system, status, schema_name)
         VALUES
-            ('core-iam', 'Core IAM & Workspaces', 'Nền tảng xác thực, phân quyền và quản lý tổ chức đa người dùng', '1.0.0', true, 'installed', 'public'),
-            ('workers', 'Workers & Fleet Engine', 'Hạ tầng quản lý thiết bị, trình duyệt đám mây và proxy mạng', '1.0.0', true, 'installed', 'workers'),
-            ('automation', 'Automation Workflow Engine', 'Bộ máy thực thi kịch bản tự động hóa đồ thị AST và chiến dịch', '1.0.0', true, 'installed', 'automation'),
-            ('browsers', 'Anti-Detect Browser Profiles', 'Quản lý hạt giống vân tay trình duyệt, profile đám mây và phiên làm việc', '1.0.0', true, 'installed', 'browsers'),
-            ('subscriptions', 'Billing & Subscriptions', 'Cơ chế thanh toán, gói dịch vụ định kỳ và ví điểm tín dụng', '1.0.0', true, 'installed', 'billing'),
-            ('commerce', 'Digital Commerce Storefront', 'Sàn giao dịch tài nguyên số, key bản quyền và bảo hành tự động', '1.0.0', false, 'installed', 'commerce'),
-            ('storage', 'Cloud Storage & Media Assets', 'Lưu trữ tài nguyên truyền thông, ảnh chụp màn hình và artifacts', '1.0.0', false, 'installed', 'media'),
-            ('webhooks', 'Events & Webhooks Outbox', 'Hệ thống hàng đợi sự kiện, outbox pattern và webhook dispatch', '1.0.0', false, 'installed', 'events'),
-            ('secrets', 'Encrypted Tenant Secret Store', 'Kho credential mã hoá theo tenant (Vault KEK -> DEK -> device-sealed; value mã hoá phía client)', '2.0.0', false, 'installed', 'secrets')
+            ('identity', 'Identity & Organizations', 'Nền tảng xác thực đa người dùng, tổ chức và phân quyền RBAC', '1.0.0', true, 'installed', 'public'),
+            ('operon', 'Operon Automation Engine', 'Bộ máy nhất thể hoá: Trình duyệt Antidetect, Cụm Workers, Proxies và Trình lập lịch', '1.0.0', true, 'installed', 'operon'),
+            ('licensing', 'Licensing & Quotas', 'Cơ chế thanh toán, gói dịch vụ định kỳ, ví điểm và hạn ngạch người dùng', '1.0.0', true, 'installed', 'billing'),
+            ('store', 'Store Engine (Medusa Commerce)', 'Sàn giao dịch tài nguyên số và phân vùng cách ly Medusa v2', '1.0.0', false, 'installed', 'medusa'),
+            ('vault', 'Vault & Secrets', 'Kho credential mã hoá theo tenant (Zero-Knowledge DEK & Vault)', '2.0.0', false, 'installed', 'secrets'),
+            ('dispatch', 'Dispatch & Events', 'Hệ thống hàng đợi sự kiện transactional outbox và webhook relay', '1.0.0', false, 'installed', 'events')
         ON CONFLICT (id) DO UPDATE SET 
             name = EXCLUDED.name,
             description = EXCLUDED.description,
