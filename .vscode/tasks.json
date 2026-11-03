@@ -28,6 +28,19 @@
         "clear": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "cloud: test smoke",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/testing/smoke_test_cloud.mjs"],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
     }
   ]
 }
