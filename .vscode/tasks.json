@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "local: database",
+      "label": "local: <db> manage",
       "type": "shell",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--local"],
@@ -18,7 +18,7 @@
       "problemMatcher": []
     },
     {
-      "label": "cloud: database",
+      "label": "cloud: <db> manage",
       "type": "shell",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/cli-database.mjs", "--cloud"],
@@ -30,11 +30,50 @@
       "problemMatcher": []
     },
     {
-      "label": "cloud: test smoke",
+      "label": "local: <plugins> manage",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/plugins/manage_plugins.mjs"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: <plugins> install",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/plugins/manage_plugins.mjs", "--install"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: <plugins> uninstall",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/plugins/manage_plugins.mjs", "--uninstall"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cloud: <test> smoke",
       "type": "shell",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/testing/smoke_test_cloud.mjs"],
-      "group": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
